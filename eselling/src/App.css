@@ -1,0 +1,25 @@
+/* App-specific styles - minimal, prefer Tailwind utilities */
+
+.App {
+  min-height: 100vh;
+  background: var(--background);
+}
+
+/* Container utility */
+.container {
+  max-width: 1280px; /* max-w-7xl */
+  margin: 0 auto;
+  padding: 0 1rem; /* px-4 */
+}
+
+@media (min-width: 640px) {
+  .container {
+    padding: 0 1.5rem; /* sm:px-6 */
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding: 0 2rem; /* lg:px-8 */
+  }
+}

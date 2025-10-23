@@ -1,0 +1,140 @@
+@import "tailwindcss";
+
+:root {
+  font-family: "Inter", system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light;
+  color: #292524; /* stone-800 */
+  background-color: #fafaf9; /* stone-50 */
+
+  /* Earth Tone Brand Colors */
+  --primary: #f59e0b; /* amber-500 - warm yellow for CTAs */
+  --secondary: #0ea5e9; /* sky-500 - earthy blue for secondary actions */
+  --success: #10b981; /* emerald-500 - muted green */
+  --error: #ef4444; /* red-500 - terracotta red */
+  --warning: #f59e0b; /* amber-500 */
+
+  /* Neutral Base Colors */
+  --background: #fafaf9; /* stone-50 */
+  --surface: #ffffff;
+  --text-primary: #292524; /* stone-800 */
+  --text-secondary: #78716c; /* stone-500 */
+  --text-muted: #a8a29e; /* stone-400 */
+  --border: #e7e5e4; /* stone-200 */
+  --border-light: #f5f5f4; /* stone-100 */
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Base Styles */
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--text-primary);
+}
+
+/* Typography */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+h1 {
+  font-size: 2.25rem;
+} /* text-4xl */
+h2 {
+  font-size: 1.875rem;
+} /* text-3xl */
+h3 {
+  font-size: 1.5rem;
+} /* text-2xl */
+h4 {
+  font-size: 1.25rem;
+} /* text-xl */
+
+p {
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* Links */
+a {
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  color: var(--secondary);
+}
+a:hover {
+  color: var(--primary);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--border-light);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Focus styles for better accessibility */
+*:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Skip link for screen readers */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: var(--primary);
+  color: white;
+  padding: 8px;
+  text-decoration: none;
+  border-radius: 4px;
+  z-index: 1000;
+}
+
+.skip-link:focus {
+  top: 6px;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --border: #000000;
+    --text-primary: #000000;
+    --text-secondary: #000000;
+  }
+}
