@@ -392,6 +392,35 @@ class ApiService {
     return this.request<Product>(`/products/${id}`);
   }
 
+  async updateProduct(
+    id: number,
+    data: Partial<CreateProductData>
+  ): Promise<ApiResponse<Product>> {
+    return this.request<Product>(`/products/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateProductMultipart(
+    id: number,
+    form: FormData
+  ): Promise<ApiResponse<Product>> {
+    return this.requestMultipart<Product>(`/products/${id}`, form, "PUT");
+  }
+
+  async deleteProduct(id: number): Promise<ApiResponse> {
+    return this.request(`/products/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  async restoreProduct(id: number): Promise<ApiResponse<Product>> {
+    return this.request<Product>(`/products/${id}/restore`, {
+      method: "POST",
+    });
+  }
+
   // Cart methods
   async getCart(): Promise<ApiResponse<CartItem[]>> {
     return this.request<CartItem[]>("/cart");
@@ -516,30 +545,51 @@ class ApiService {
     });
   }
 
-  // Refund methods
+  // Refund methods - DEPRECATED: System now uses order rejection instead
+  // These methods are kept for backward compatibility but should not be used
+  /**
+   * @deprecated System now uses order rejection instead of refunds
+   */
   async requestRefund(
     orderId: number,
     reason: string
   ): Promise<ApiResponse<Refund>> {
+    console.warn("requestRefund is deprecated. Use order rejection instead.");
     return this.request<Refund>(`/orders/${orderId}/refund`, {
       method: "POST",
       body: JSON.stringify({ reason }),
     });
   }
 
+  /**
+   * @deprecated System now uses order rejection instead of refunds
+   */
   async getRefunds(): Promise<ApiResponse<Refund[]>> {
+    console.warn("getRefunds is deprecated. Use order rejection instead.");
     return this.request<Refund[]>("/refunds");
   }
 
+  /**
+   * @deprecated System now uses order rejection instead of refunds
+   */
   async getSellerRefunds(): Promise<ApiResponse<Refund[]>> {
+    console.warn(
+      "getSellerRefunds is deprecated. Use order rejection instead."
+    );
     return this.request<Refund[]>("/seller/refunds");
   }
 
+  /**
+   * @deprecated System now uses order rejection instead of refunds
+   */
   async updateRefundStatus(
     refundId: number,
     status: string,
     response?: string
   ): Promise<ApiResponse<Refund>> {
+    console.warn(
+      "updateRefundStatus is deprecated. Use order rejection instead."
+    );
     return this.request<Refund>(`/refunds/${refundId}`, {
       method: "PATCH",
       body: JSON.stringify({ status, seller_response: response }),

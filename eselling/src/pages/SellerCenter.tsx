@@ -18,8 +18,8 @@ import {
   CheckCircle,
   Clock,
   Truck,
-  RotateCcw,
   AlertTriangle,
+  RefreshCw,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Toast from "../components/Toast";
@@ -33,6 +33,7 @@ const SellerCenter: React.FC = () => {
   const [seller, setSeller] = useState<any>(null);
   const [showProductForm, setShowProductForm] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
+  const [inactiveProducts, setInactiveProducts] = useState<Product[]>([]);
   const [formData, setFormData] = useState<CreateProductData>({
     seller_id: 0,
     name: "",
@@ -47,6 +48,10 @@ const SellerCenter: React.FC = () => {
     images: [],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [toast, setToast] = useState({
     message: "",
     type: "success" as "success" | "error",
@@ -148,6 +153,7 @@ const SellerCenter: React.FC = () => {
   useEffect(() => {
     if (seller?.id) {
       fetchProducts(seller.id);
+      fetchInactiveProducts(seller.id);
       fetchOrders();
       // Initialize store form data
       setStoreFormData({
@@ -180,6 +186,33 @@ const SellerCenter: React.FC = () => {
       }
     } catch (error) {
       console.error("Failed to fetch products:", error);
+    }
+  };
+
+  const fetchInactiveProducts = async (sellerId: number) => {
+    try {
+      const res = await apiService.getProductsBySeller(sellerId, 1, 100);
+      if (res.success && res.data) {
+        const allProducts = res.data.data || [];
+        // Filter for inactive products
+        const inactiveData = allProducts.filter(
+          (product: Product) => !product.is_active
+        );
+        setInactiveProducts(inactiveData);
+      }
+    } catch (error) {
+      console.error("Failed to fetch inactive products:", error);
+    }
+  };
+
+  const refreshData = async () => {
+    if (seller?.id) {
+      await Promise.all([
+        fetchProducts(seller.id),
+        fetchInactiveProducts(seller.id),
+        fetchOrders(),
+      ]);
+      showToast("Data refreshed successfully", "success");
     }
   };
 
@@ -227,13 +260,13 @@ const SellerCenter: React.FC = () => {
 
     try {
       // Validate required fields
-      if (imageFiles.length === 0) {
+      if (imageFiles.length === 0 && !editingProduct) {
         showToast("Please upload at least one product photo", "error");
         setIsSubmitting(false);
         return;
       }
 
-      if (!selectedCategory) {
+      if (!selectedCategory && !editingProduct?.category) {
         showToast("Please select a product category", "error");
         setIsSubmitting(false);
         return;
@@ -246,43 +279,132 @@ const SellerCenter: React.FC = () => {
       form.append("slug", formData.slug);
       if (formData.description)
         form.append("description", formData.description);
-      form.append("category", selectedCategory);
+      form.append(
+        "category",
+        selectedCategory || editingProduct?.category || ""
+      );
       if (formData.sku) form.append("sku", formData.sku);
       form.append("price", String(formData.price));
       form.append("stock", String(formData.stock));
       if (formData.weight) form.append("weight", formData.weight);
 
       // Files: first is main_image, rest are images[]
-      form.append("main_image", imageFiles[0]);
-      imageFiles.slice(1).forEach((file) => form.append("images[]", file));
+      if (imageFiles.length > 0) {
+        form.append("main_image", imageFiles[0]);
+        imageFiles.slice(1).forEach((file) => form.append("images[]", file));
+      }
 
-      const response = await apiService.createProductMultipart(form);
+      let response;
+      if (editingProduct) {
+        response = await apiService.updateProductMultipart(
+          editingProduct.id,
+          form
+        );
+      } else {
+        response = await apiService.createProductMultipart(form);
+      }
+
       if (response.success) {
-        showToast("Product created successfully!", "success");
-        setFormData({
-          seller_id: seller.id,
-          name: "",
-          slug: "",
-          description: "",
-          category: "",
-          sku: "",
-          price: 0,
-          stock: 0,
-          weight: "",
-          main_image_url: "",
-          images: [],
-        });
-        setSelectedCategory("");
-        setImagePreviews([]);
-        setImageFiles([]);
-        setShowProductForm(false);
+        showToast(
+          editingProduct
+            ? "Product updated successfully!"
+            : "Product created successfully!",
+          "success"
+        );
+        resetForm();
         fetchProducts(seller.id);
       }
     } catch (error: any) {
-      showToast(error.message || "Failed to create product", "error");
+      showToast(
+        error.message ||
+          (editingProduct
+            ? "Failed to update product"
+            : "Failed to create product"),
+        "error"
+      );
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      seller_id: seller.id,
+      name: "",
+      slug: "",
+      description: "",
+      category: "",
+      sku: "",
+      price: 0,
+      stock: 0,
+      weight: "",
+      main_image_url: "",
+      images: [],
+    });
+    setSelectedCategory("");
+    setImagePreviews([]);
+    setImageFiles([]);
+    setShowProductForm(false);
+    setEditingProduct(null);
+  };
+
+  const handleEditProduct = (product: Product) => {
+    setEditingProduct(product);
+    setFormData({
+      seller_id: product.seller_id,
+      name: product.name,
+      slug: product.slug,
+      description: product.description || "",
+      category: product.category || "",
+      sku: product.sku || "",
+      price: product.price,
+      stock: product.stock,
+      weight: product.weight || "",
+      main_image_url: product.main_image_url || "",
+      images: product.images || [],
+    });
+    setSelectedCategory(product.category || "");
+    setImagePreviews([]);
+    setImageFiles([]);
+    setShowProductForm(true);
+  };
+
+  const handleDeleteProduct = async () => {
+    if (!productToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await apiService.deleteProduct(productToDelete.id);
+      if (response.success) {
+        showToast("Product removed from store successfully!", "success");
+        fetchProducts(seller.id);
+        fetchInactiveProducts(seller.id);
+        setShowDeleteConfirm(false);
+        setProductToDelete(null);
+      }
+    } catch (error: any) {
+      showToast(error.message || "Failed to remove product", "error");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleRestoreProduct = async (product: Product) => {
+    try {
+      const response = await apiService.restoreProduct(product.id);
+      if (response.success) {
+        showToast("Product restored successfully!", "success");
+        fetchProducts(seller.id);
+        fetchInactiveProducts(seller.id);
+      }
+    } catch (error: any) {
+      showToast(error.message || "Failed to restore product", "error");
+    }
+  };
+
+  const openDeleteConfirm = (product: Product) => {
+    setProductToDelete(product);
+    setShowDeleteConfirm(true);
   };
 
   const showToast = (message: string, type: "success" | "error") => {
@@ -338,8 +460,8 @@ const SellerCenter: React.FC = () => {
         return <CheckCircle className="h-4 w-4" />;
       case "cancelled":
         return <X className="h-4 w-4" />;
-      case "refunded":
-        return <RotateCcw className="h-4 w-4" />;
+      case "rejected":
+        return <X className="h-4 w-4" />;
       default:
         return <AlertTriangle className="h-4 w-4" />;
     }
@@ -361,8 +483,8 @@ const SellerCenter: React.FC = () => {
         return "bg-emerald-100 text-emerald-800";
       case "cancelled":
         return "bg-red-100 text-red-800";
-      case "refunded":
-        return "bg-orange-100 text-orange-800";
+      case "rejected":
+        return "bg-red-100 text-red-800";
       default:
         return "bg-stone-100 text-stone-800";
     }
@@ -572,6 +694,13 @@ const SellerCenter: React.FC = () => {
             </div>
             <div className="flex gap-3">
               <button
+                onClick={refreshData}
+                className="flex items-center space-x-2 px-4 py-2 text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-colors duration-200 border border-amber-200"
+              >
+                <RefreshCw className="w-4 h-4" />
+                <span>Refresh</span>
+              </button>
+              <button
                 onClick={() => setShowProductForm(true)}
                 className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 inline-flex items-center gap-2"
               >
@@ -651,7 +780,18 @@ const SellerCenter: React.FC = () => {
                   }`}
                 >
                   <Package className="h-4 w-4 inline mr-2" />
-                  Products ({products.length})
+                  Active Products ({products.length})
+                </button>
+                <button
+                  onClick={() => setActiveTab("inactive-products")}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === "inactive-products"
+                      ? "border-amber-500 text-amber-600"
+                      : "border-transparent text-stone-500 hover:text-stone-700 hover:border-stone-300"
+                  }`}
+                >
+                  <Trash2 className="h-4 w-4 inline mr-2" />
+                  Inactive Products ({inactiveProducts.length})
                 </button>
                 <button
                   onClick={() => setActiveTab("orders")}
@@ -756,9 +896,115 @@ const SellerCenter: React.FC = () => {
                           <p className="text-lg font-bold text-stone-800 mb-2">
                             ₱{product.price.toLocaleString()}
                           </p>
-                          <div className="flex justify-between text-sm text-stone-600">
+                          <div className="flex justify-between text-sm text-stone-600 mb-3">
                             <span>Stock: {product.stock}</span>
                             <span>Sold: {product.sold_count}</span>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditProduct(product)}
+                              leftIcon={<Eye className="h-4 w-4" />}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => openDeleteConfirm(product)}
+                              leftIcon={<Trash2 className="h-4 w-4" />}
+                              className="text-red-600 border-red-300 hover:bg-red-50"
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : activeTab === "inactive-products" ? (
+                <div>
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg font-semibold text-stone-800">
+                      Inactive Products
+                    </h2>
+                    <p className="text-sm text-stone-600">
+                      Products that have been removed from your store
+                    </p>
+                  </div>
+
+                  {inactiveProducts.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Trash2 className="w-12 h-12 text-stone-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-stone-600 mb-2">
+                        No inactive products
+                      </h3>
+                      <p className="text-stone-500">
+                        Products you remove will appear here and can be
+                        restored.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {inactiveProducts.map((product) => (
+                        <Card
+                          key={product.id}
+                          variant="outlined"
+                          className="opacity-75"
+                        >
+                          <div className="aspect-square bg-stone-100 rounded-lg mb-3 overflow-hidden">
+                            {product.main_image_url ? (
+                              <img
+                                src={getAssetUrl(product.main_image_url)}
+                                alt={product.name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = "none";
+                                  target.nextElementSibling?.classList.remove(
+                                    "hidden"
+                                  );
+                                }}
+                              />
+                            ) : null}
+                            <div
+                              className={`w-full h-full flex items-center justify-center ${
+                                product.main_image_url ? "hidden" : ""
+                              }`}
+                            >
+                              <Package className="h-8 w-8 text-stone-400" />
+                            </div>
+                          </div>
+                          <h3 className="font-medium text-stone-800 mb-2">
+                            {product.name}
+                          </h3>
+                          <p className="text-lg font-bold text-stone-800 mb-2">
+                            ₱{product.price.toLocaleString()}
+                          </p>
+                          <div className="flex justify-between text-sm text-stone-600 mb-3">
+                            <span>Stock: {product.stock}</span>
+                            <span>Sold: {product.sold_count}</span>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditProduct(product)}
+                              leftIcon={<Eye className="h-4 w-4" />}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              onClick={() => handleRestoreProduct(product)}
+                              leftIcon={<RefreshCw className="h-4 w-4" />}
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                            >
+                              Restore
+                            </Button>
                           </div>
                         </Card>
                       ))}
@@ -786,7 +1032,7 @@ const SellerCenter: React.FC = () => {
                         </option>
                         <option value="picked_up">Picked Up</option>
                         <option value="cancelled">Cancelled</option>
-                        <option value="refunded">Refunded</option>
+                        <option value="rejected">Rejected</option>
                       </select>
                     </div>
                   </div>
@@ -879,7 +1125,7 @@ const SellerCenter: React.FC = () => {
                               >
                                 View
                               </Button>
-                              {!["cancelled", "refunded", "delivered"].includes(
+                              {!["cancelled", "rejected", "delivered"].includes(
                                 order.status
                               ) && (
                                 <Button
@@ -1111,10 +1357,7 @@ const SellerCenter: React.FC = () => {
       {/* Product Form Modal */}
       {showProductForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setShowProductForm(false)}
-          />
+          <div className="absolute inset-0 bg-black/40" onClick={resetForm} />
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1128,18 +1371,22 @@ const SellerCenter: React.FC = () => {
                   </div>
                   <div>
                     <h3 className="text-xl font-bold text-stone-800">
-                      🌱 Add New Product
+                      {editingProduct
+                        ? "✏️ Edit Product"
+                        : "🌱 Add New Product"}
                     </h3>
-                    {/* <p className="text-sm text-stone-600">
-                       List your fresh produce from Partido
-                     </p> */}
+                    <p className="text-sm text-stone-600">
+                      {editingProduct
+                        ? "Update your product information"
+                        : "List your fresh produce from Partido"}
+                    </p>
                   </div>
                 </div>
                 <button
                   className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-stone-600 hover:text-amber-800 hover:bg-amber-50 transition-all duration-200 shadow-sm"
-                  onClick={() => setShowProductForm(false)}
+                  onClick={resetForm}
                 >
-                  X{/* <X className="w-4 h-4" /> */}
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -1457,25 +1704,7 @@ const SellerCenter: React.FC = () => {
                 <div className="flex space-x-3">
                   <button
                     type="button"
-                    onClick={() => {
-                      setShowProductForm(false);
-                      setImagePreviews([]);
-                      setImageFiles([]);
-                      setFormData({
-                        seller_id: seller.id,
-                        name: "",
-                        slug: "",
-                        description: "",
-                        category: "",
-                        sku: "",
-                        price: 0,
-                        stock: 0,
-                        weight: "",
-                        main_image_url: "",
-                        images: [],
-                      });
-                      setSelectedCategory("");
-                    }}
+                    onClick={resetForm}
                     className="px-6 py-3 border-2 border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition-all duration-200"
                   >
                     Cancel
@@ -1488,12 +1717,14 @@ const SellerCenter: React.FC = () => {
                     {isSubmitting ? (
                       <>
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        Creating Product...
+                        {editingProduct
+                          ? "Updating Product..."
+                          : "Creating Product..."}
                       </>
                     ) : (
                       <>
                         <Plus className="w-4 h-4" />
-                        Create Product
+                        {editingProduct ? "Update Product" : "Create Product"}
                       </>
                     )}
                   </button>
@@ -1656,6 +1887,19 @@ const SellerCenter: React.FC = () => {
                 </div>
               </div>
             )}
+
+            {/* Rejection Reason */}
+            {selectedOrder.status === "rejected" &&
+              selectedOrder.admin_notes && (
+                <div>
+                  <h4 className="font-semibold text-red-700 mb-3">
+                    ⚠️ Rejection Reason
+                  </h4>
+                  <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                    <p className="text-red-700">{selectedOrder.admin_notes}</p>
+                  </div>
+                </div>
+              )}
           </div>
         )}
       </Modal>
@@ -2141,6 +2385,78 @@ const SellerCenter: React.FC = () => {
           </motion.div>
         </div>
       )}
+
+      {/* Delete Product Confirmation Modal */}
+      <Modal
+        isOpen={showDeleteConfirm}
+        onClose={() => {
+          setShowDeleteConfirm(false);
+          setProductToDelete(null);
+        }}
+        title="Remove Product from Store"
+        size="md"
+      >
+        {productToDelete && (
+          <div className="space-y-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trash2 className="w-8 h-8 text-red-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-stone-800 mb-2">
+                Remove "{productToDelete.name}" from store?
+              </h3>
+              <p className="text-stone-600">
+                The product will be moved to inactive products and can be
+                restored later. Purchase history will be preserved.
+              </p>
+            </div>
+
+            <div className="bg-stone-50 p-4 rounded-lg">
+              <h4 className="font-medium text-stone-800 mb-2">
+                Product Details:
+              </h4>
+              <div className="text-sm text-stone-600 space-y-1">
+                <p>Price: ₱{productToDelete.price.toLocaleString()}</p>
+                <p>Stock: {productToDelete.stock}</p>
+                <p>Sold: {productToDelete.sold_count}</p>
+                {productToDelete.category && (
+                  <p>Category: {productToDelete.category}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setProductToDelete(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleDeleteProduct}
+                disabled={isDeleting}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                {isDeleting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    Removing...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Remove from Store
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       <Footer />
     </>

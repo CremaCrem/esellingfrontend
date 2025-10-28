@@ -47,16 +47,29 @@ class SellerController extends Controller
             ], 401);
         }
 
-        if (Seller::where('user_id', $user->id)->exists()) {
+        // Check for existing seller application
+        $existingSeller = Seller::where('user_id', $user->id)->first();
+        
+        if ($existingSeller && $existingSeller->verification_status !== 'rejected') {
             return response()->json([
                 'success' => false,
-                'message' => 'You already have a seller profile.',
+                'message' => 'You already have a seller profile with status: ' . $existingSeller->verification_status . '.',
             ], 422);
         }
 
+        // Build validation rules
+        $slugRule = ['required', 'string', 'max:140'];
+        if ($existingSeller && $existingSeller->verification_status === 'rejected') {
+            // If updating a rejected seller, allow same slug or new unique slug
+            $slugRule[] = 'unique:seller,slug,' . $existingSeller->id;
+        } else {
+            // If creating new, must be unique
+            $slugRule[] = 'unique:seller,slug';
+        }
+        
         $validator = Validator::make($request->all(), [
             'shop_name' => ['required', 'string', 'max:120'],
-            'slug' => ['required', 'string', 'max:140', 'unique:seller,slug'],
+            'slug' => $slugRule,
             'description' => ['nullable', 'string'],
             'logo' => ['nullable', 'image', 'max:5120'],
             'banner' => ['nullable', 'image', 'max:8192'],
@@ -89,11 +102,21 @@ class SellerController extends Controller
             $data['id_image_path'] = "/storage/{$path}";
         }
 
-        $seller = Seller::create(array_merge($data, [
-            'user_id' => $user->id,
-            'verification_status' => 'unverified',
-            'is_active' => true,
-        ]));
+        // If existing seller with rejected status, update it; otherwise create new
+        if ($existingSeller && $existingSeller->verification_status === 'rejected') {
+            // Update the existing seller application
+            $data['verification_status'] = 'unverified';
+            $data['is_active'] = true;
+            $existingSeller->update($data);
+            $seller = $existingSeller->fresh();
+        } else {
+            // Create new seller application
+            $seller = Seller::create(array_merge($data, [
+                'user_id' => $user->id,
+                'verification_status' => 'unverified',
+                'is_active' => true,
+            ]));
+        }
 
         return response()->json([
             'success' => true,

@@ -213,7 +213,10 @@ class AdminController extends Controller
             ]);
             $message = 'Seller application approved successfully.';
         } else {
-            // For now, we'll keep it as unverified but could add a 'rejected' status
+            // Set status to rejected when admin rejects the application
+            $seller->update([
+                'verification_status' => 'rejected',
+            ]);
             $message = 'Seller application rejected.';
         }
 
@@ -443,7 +446,9 @@ class AdminController extends Controller
             ], 422);
         }
 
+        // Update order status to rejected and store rejection reason in admin_notes
         $order->update([
+            'status' => 'rejected',
             'payment_status' => 'failed',
             'admin_notes' => $request->input('reason'),
         ]);

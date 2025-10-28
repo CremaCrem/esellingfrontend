@@ -44,6 +44,7 @@ class ProductController extends Controller
 
         // Initialize fields to be saved
         $data['main_image_url'] = $data['main_image_url'] ?? null;
+        $data['is_active'] = true; // Explicitly set products as active when created
 
         // Handle main image upload
         if ($request->hasFile('main_image')) {
@@ -112,10 +113,10 @@ class ProductController extends Controller
         ]);
     }
 
-    public function show($id)
+    public function show(int $id)
     {
         $product = Product::with('seller')->find($id);
-
+        
         if (!$product) {
             return response()->json([
                 'success' => false,
@@ -129,6 +130,115 @@ class ProductController extends Controller
             'data' => $product,
         ]);
     }
+
+    public function update(Request $request, $id)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+        }
+
+        $product = Product::find($id);
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product not found.',
+            ], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'name' => ['sometimes', 'string', 'max:160'],
+            'slug' => ['sometimes', 'string', 'max:180', 'unique:product,slug,' . $id],
+            'description' => ['nullable', 'string'],
+            'category' => ['nullable', 'string', 'max:120'],
+            'sku' => ['nullable', 'string', 'max:80'],
+            'price' => ['sometimes', 'numeric', 'min:0'],
+            'stock' => ['sometimes', 'integer', 'min:0'],
+            'main_image' => ['nullable', 'image', 'max:5120'], // 5MB
+            'images' => ['nullable', 'array'],
+            'images.*' => ['image', 'max:5120'],
+            'weight' => ['nullable', 'string', 'max:50'],
+            'options' => ['nullable', 'array'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'The given data was invalid.',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $data = $validator->validated();
+
+        // Handle main image upload
+        if ($request->hasFile('main_image')) {
+            // Store under storage/app/public/products
+            $path = $request->file('main_image')->store('products', 'public');
+            // Build public URL: /storage/products/...
+            $data['main_image_url'] = '/storage/' . $path;
+        }
+
+        // Handle additional images upload
+        $imagePaths = [];
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $imageFile) {
+                $stored = $imageFile->store('products', 'public');
+                $imagePaths[] = '/storage/' . $stored;
+            }
+        }
+        if (!empty($imagePaths)) {
+            $data['images'] = $imagePaths;
+        }
+
+        // Remove non-fillable transient keys
+        unset($data['main_image']);
+
+        $product->update($data);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Product updated successfully.',
+            'data' => $product->fresh(),
+        ]);
+    }
+
+    public function destroy($id)
+    {
+        $product = Product::find($id);
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product not found.',
+            ], 404);
+        }
+
+        // Set product as inactive instead of deleting
+        $product->update(['is_active' => false]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Product removed from store successfully.',
+        ]);
+    }
+
+    public function restore($id)
+    {
+        $product = Product::find($id);
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product not found.',
+            ], 404);
+        }
+
+        // Reactivate the product
+        $product->update(['is_active' => true]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Product restored successfully.',
+            'data' => $product->fresh(),
+        ]);
+    }
 }
-
-

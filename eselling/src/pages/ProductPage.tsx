@@ -39,7 +39,7 @@ const ProductPage: React.FC = () => {
 
   const handleQuantityChange = (increment: boolean) => {
     if (increment) {
-      setQuantity((prev) => prev + 1);
+      setQuantity((prev) => Math.min(prev + 1, product?.stock || 1));
     } else if (quantity > 1) {
       setQuantity((prev) => prev - 1);
     }
@@ -245,7 +245,8 @@ const ProductPage: React.FC = () => {
                 </span>
                 <button
                   onClick={() => handleQuantityChange(true)}
-                  className="w-8 h-8 border border-stone-300 rounded-md flex items-center justify-center hover:bg-stone-50 transition-colors"
+                  disabled={quantity >= product.stock}
+                  className="w-8 h-8 border border-stone-300 rounded-md flex items-center justify-center hover:bg-stone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Plus className="h-4 w-4 text-stone-600" />
                 </button>

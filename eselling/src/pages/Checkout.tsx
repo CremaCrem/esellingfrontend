@@ -355,11 +355,11 @@ const Checkout: React.FC = () => {
                 )}
               </div>
 
-              {/* Pickup Information */}
+              {/* Contact Information */}
               <div className="bg-white rounded-lg shadow-sm border border-stone-200 p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-semibold text-stone-800">
-                    Pickup Information
+                    Contact Information
                   </h2>
                   <button
                     onClick={() => navigate("/my-account")}
@@ -377,10 +377,6 @@ const Checkout: React.FC = () => {
                         {user.first_name} {user.last_name}
                       </p>
                       <p className="text-stone-700">{user.contact_number}</p>
-                      <p className="text-sm text-stone-600 mt-1">
-                        Products will be available for pickup at the
-                        university's designated location.
-                      </p>
                     </div>
                   </div>
                 ) : (
@@ -393,6 +389,28 @@ const Checkout: React.FC = () => {
                 )}
               </div>
 
+              {/* Pickup Location */}
+              <div className="bg-white rounded-lg shadow-sm border border-stone-200 p-6">
+                <h2 className="text-xl font-semibold text-stone-800 mb-4">
+                  Pickup Location
+                </h2>
+                <div className="flex items-start space-x-3">
+                  <MapPin className="h-5 w-5 text-emerald-600 mt-1" />
+                  <div>
+                    <p className="font-medium text-stone-800">
+                      Partido State University Goa Campus
+                    </p>
+                    <p className="text-stone-700">
+                      Goa, Camarines Sur, Philippines
+                    </p>
+                    <p className="text-sm text-stone-600 mt-1">
+                      Products will be available for pickup at the university's
+                      designated location.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {/* Payment Method */}
               <div className="bg-white rounded-lg shadow-sm border border-stone-200 p-6">
                 <h2 className="text-xl font-semibold text-emerald-900 mb-4">
@@ -402,8 +420,6 @@ const Checkout: React.FC = () => {
                   {[
                     { value: "cop", label: "Cash on Pickup (COP)" },
                     { value: "gcash", label: "GCash" },
-                    { value: "paymaya", label: "PayMaya" },
-                    { value: "bank_transfer", label: "Bank Transfer" },
                   ].map((method) => (
                     <label
                       key={method.value}

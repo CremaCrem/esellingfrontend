@@ -40,6 +40,7 @@ interface SellerApplication {
   description: string;
   verification_status: string;
   created_at: string;
+  id_image_path?: string;
   user: {
     id: number;
     name: string;
@@ -488,6 +489,12 @@ const AdminDashboard: React.FC = () => {
                                 <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs font-medium rounded-full">
                                   Pending
                                 </span>
+                                {application.id_image_path && (
+                                  <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full flex items-center gap-1">
+                                    <Eye className="w-3 h-3" />
+                                    ID Verified
+                                  </span>
+                                )}
                               </div>
 
                               <div className="space-y-1 text-sm text-stone-600">
@@ -883,6 +890,28 @@ const AdminDashboard: React.FC = () => {
                 <div>
                   <p className="text-sm text-stone-600">Description</p>
                   <p className="text-stone-800">{selected.description}</p>
+                </div>
+              )}
+              {/* Seller ID Image */}
+              {selected.id_image_path && (
+                <div>
+                  <p className="text-sm text-stone-600 mb-2">Valid ID</p>
+                  <div className="border border-stone-200 rounded-lg overflow-hidden">
+                    <img
+                      src={getAssetUrl(selected.id_image_path)}
+                      alt="Seller ID"
+                      className="w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
+                      onClick={() =>
+                        window.open(
+                          getAssetUrl(selected.id_image_path),
+                          "_blank"
+                        )
+                      }
+                    />
+                  </div>
+                  <p className="text-xs text-stone-500 mt-2">
+                    Click to view full size
+                  </p>
                 </div>
               )}
             </div>

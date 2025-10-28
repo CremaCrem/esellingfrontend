@@ -62,6 +62,7 @@ class Order extends Model
 
     /**
      * Get the refund request for this order.
+     * @deprecated System now uses order rejection instead of refunds
      */
     public function refund()
     {

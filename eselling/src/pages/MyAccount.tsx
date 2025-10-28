@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import {
   User,
-  Settings,
   LogOut,
   ChevronDown,
   ChevronRight,
@@ -56,6 +55,8 @@ const MyAccount: React.FC = () => {
     type: "success" as "success" | "error" | "warning" | "info",
     isVisible: false,
   });
+  const [sellerApplication, setSellerApplication] = useState<any>(null);
+  const [loadingSeller, setLoadingSeller] = useState(true);
   const { setShowLogoutModal, setHandleLogout } = useLogoutModal();
 
   useEffect(() => {
@@ -63,6 +64,28 @@ const MyAccount: React.FC = () => {
       setEmail(user.email);
       setContactNumber(user.contact_number ?? "");
     }
+  }, [user]);
+
+  // Check for existing seller application
+  useEffect(() => {
+    const checkSellerApplication = async () => {
+      if (!user) return;
+
+      setLoadingSeller(true);
+      try {
+        const response = await apiService.getMySeller();
+        if (response.success && response.data) {
+          setSellerApplication(response.data);
+        }
+      } catch (error) {
+        // Seller profile doesn't exist yet - user can apply
+        setSellerApplication(null);
+      } finally {
+        setLoadingSeller(false);
+      }
+    };
+
+    checkSellerApplication();
   }, [user]);
 
   const handleSave = async () => {
@@ -173,6 +196,27 @@ const MyAccount: React.FC = () => {
         type: "success",
         isVisible: true,
       });
+
+      // Refresh seller application status
+      const response = await apiService.getMySeller();
+      if (response.success && response.data) {
+        setSellerApplication(response.data);
+      }
+
+      // Reset form
+      setSellerForm({
+        shop_name: "",
+        slug: "",
+        description: "",
+        logo_url: "",
+        banner_url: "",
+        id_image_path: "",
+        contact_email: "",
+        contact_phone: "",
+      });
+      setLogoFile(null);
+      setBannerFile(null);
+      setIdImageFile(null);
     } catch (err: any) {
       const errorMessage = err?.message || "Failed to submit application.";
       setSellerMessage(errorMessage);
@@ -443,6 +487,11 @@ const MyAccount: React.FC = () => {
           </div>
         );
       case "seller-signup":
+        // Check seller application status
+        const canApply =
+          !sellerApplication ||
+          sellerApplication.verification_status === "rejected";
+
         return (
           <div className="p-6">
             <h1 className="text-2xl font-bold text-stone-800 mb-2">
@@ -451,6 +500,44 @@ const MyAccount: React.FC = () => {
             <p className="text-stone-800/70 mb-6">
               Fill out the details below to apply as a seller.
             </p>
+
+            {/* Seller application status messages */}
+            {loadingSeller ? (
+              <div className="mb-6 px-4 py-3 rounded-lg border border-stone-200 bg-stone-50 text-stone-700 text-center">
+                Loading seller status...
+              </div>
+            ) : sellerApplication?.verification_status === "unverified" ? (
+              <div className="mb-6 px-4 py-3 rounded-lg border border-amber-300 bg-amber-50 text-amber-800">
+                <p className="font-medium">Application Pending</p>
+                <p className="text-sm mt-1">
+                  Your seller application is currently under review. Please wait
+                  for admin approval.
+                </p>
+              </div>
+            ) : sellerApplication?.verification_status === "verified" ? (
+              <div className="mb-6 px-4 py-3 rounded-lg border border-green-300 bg-green-50 text-green-800">
+                <p className="font-medium">Application Accepted</p>
+                <p className="text-sm mt-1">
+                  Your seller account has been verified. You can now manage your
+                  store from the Seller Center.
+                </p>
+                <button
+                  onClick={() => navigate("/seller-center")}
+                  className="mt-3 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+                >
+                  Go to Seller Center
+                </button>
+              </div>
+            ) : sellerApplication?.verification_status === "rejected" ? (
+              <div className="mb-6 px-4 py-3 rounded-lg border border-red-300 bg-red-50 text-red-800">
+                <p className="font-medium">Application Rejected</p>
+                <p className="text-sm mt-1">
+                  Your previous seller application was rejected. You can submit
+                  a new application below.
+                </p>
+              </div>
+            ) : null}
+
             {sellerMessage && (
               <div className="mb-4 px-4 py-3 rounded-lg border border-stone-200 bg-stone-50 text-stone-700">
                 {sellerMessage}
@@ -467,7 +554,8 @@ const MyAccount: React.FC = () => {
                     value={sellerForm.shop_name}
                     onChange={handleSellerChange}
                     required
-                    className="w-full px-3 py-2 border border-stone-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                    disabled={!canApply}
+                    className="w-full px-3 py-2 border border-stone-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500 disabled:bg-stone-50 disabled:opacity-50"
                   />
                 </div>
                 <div>
@@ -480,7 +568,8 @@ const MyAccount: React.FC = () => {
                     onChange={handleSellerChange}
                     required
                     placeholder="my-shop-name"
-                    className="w-full px-3 py-2 border border-stone-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                    disabled={!canApply}
+                    className="w-full px-3 py-2 border border-stone-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500 disabled:bg-stone-50 disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -494,7 +583,8 @@ const MyAccount: React.FC = () => {
                   value={sellerForm.description}
                   onChange={handleSellerChange}
                   rows={3}
-                  className="w-full px-3 py-2 border border-stone-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                  disabled={!canApply}
+                  className="w-full px-3 py-2 border border-stone-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500 disabled:bg-stone-50 disabled:opacity-50"
                 />
               </div>
 
@@ -507,7 +597,8 @@ const MyAccount: React.FC = () => {
                     type="file"
                     accept="image/*"
                     onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
-                    className="w-full px-3 py-2 border border-stone-300 rounded-md bg-white"
+                    disabled={!canApply}
+                    className="w-full px-3 py-2 border border-stone-300 rounded-md bg-white disabled:bg-stone-50 disabled:opacity-50"
                   />
                 </div>
                 <div>
@@ -518,7 +609,8 @@ const MyAccount: React.FC = () => {
                     type="file"
                     accept="image/*"
                     onChange={(e) => setBannerFile(e.target.files?.[0] || null)}
-                    className="w-full px-3 py-2 border border-stone-300 rounded-md bg-white"
+                    disabled={!canApply}
+                    className="w-full px-3 py-2 border border-stone-300 rounded-md bg-white disabled:bg-stone-50 disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -542,10 +634,15 @@ const MyAccount: React.FC = () => {
                     className="hidden"
                     id="id-image-upload"
                     required
+                    disabled={!canApply}
                   />
                   <label
                     htmlFor="id-image-upload"
-                    className="cursor-pointer block"
+                    className={`block ${
+                      canApply
+                        ? "cursor-pointer"
+                        : "cursor-not-allowed opacity-50"
+                    }`}
                   >
                     {idImageFile ? (
                       <div className="space-y-2">
@@ -610,7 +707,8 @@ const MyAccount: React.FC = () => {
                     name="contact_email"
                     value={sellerForm.contact_email || ""}
                     onChange={handleSellerChange}
-                    className="w-full px-3 py-2 border border-stone-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                    disabled={!canApply}
+                    className="w-full px-3 py-2 border border-stone-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500 disabled:bg-stone-50 disabled:opacity-50"
                   />
                 </div>
                 <div>
@@ -621,7 +719,8 @@ const MyAccount: React.FC = () => {
                     name="contact_phone"
                     value={sellerForm.contact_phone || ""}
                     onChange={handleSellerChange}
-                    className="w-full px-3 py-2 border border-stone-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                    disabled={!canApply}
+                    className="w-full px-3 py-2 border border-stone-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500 disabled:bg-stone-50 disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -629,14 +728,18 @@ const MyAccount: React.FC = () => {
               <div className="flex justify-end">
                 <button
                   type="submit"
-                  disabled={sellerSubmitting}
+                  disabled={!canApply || sellerSubmitting}
                   className={`px-4 py-2 rounded-lg font-medium text-white ${
-                    sellerSubmitting
-                      ? "bg-gray-400"
+                    !canApply || sellerSubmitting
+                      ? "bg-gray-400 cursor-not-allowed"
                       : "bg-amber-600 hover:bg-amber-700"
                   }`}
                 >
-                  {sellerSubmitting ? "Submitting..." : "Submit Application"}
+                  {sellerSubmitting
+                    ? "Submitting..."
+                    : canApply
+                    ? "Submit Application"
+                    : "Application Submitted"}
                 </button>
               </div>
             </form>
@@ -735,12 +838,8 @@ const MyAccount: React.FC = () => {
                 )}
               </div>
 
-              {/* Settings and Logout */}
+              {/* Logout */}
               <div className="space-y-2">
-                <button className="flex items-center space-x-3 w-full px-3 py-2 rounded-md text-stone-700 hover:bg-stone-50 transition-colors">
-                  <Settings className="h-5 w-5 text-stone-600" />
-                  <span>Settings</span>
-                </button>
                 <button
                   onClick={handleLogoutClick}
                   className="flex items-center space-x-3 w-full px-3 py-2 rounded-md text-stone-700 hover:bg-stone-50 transition-colors"

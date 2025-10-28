@@ -184,8 +184,8 @@ const SellerStore: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-emerald-50/40 flex items-center justify-center">
-        <div className="text-emerald-600">Loading store...</div>
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+        <div className="text-stone-600">Loading store...</div>
       </div>
     );
   }
@@ -200,7 +200,7 @@ const SellerStore: React.FC = () => {
         duration={3000}
       />
 
-      <div className="min-h-screen bg-emerald-50/40">
+      <div className="min-h-screen bg-stone-50">
         {/* Seller Banner Section */}
         {sellerDetails?.banner_url && (
           <div className="relative h-64 md:h-80 overflow-hidden">
@@ -238,7 +238,7 @@ const SellerStore: React.FC = () => {
                         sellerDetails.logo_url ? "hidden" : ""
                       }`}
                     >
-                      <span className="text-emerald-600 text-xl font-bold">
+                      <span className="text-amber-600 text-xl font-bold">
                         {sellerDetails.shop_name?.charAt(0) || "S"}
                       </span>
                     </div>
@@ -278,21 +278,21 @@ const SellerStore: React.FC = () => {
         )}
 
         {/* Header */}
-        <div className="bg-white border-b border-emerald-100 sticky top-0 z-10">
+        <div className="bg-white border-b border-stone-200 sticky top-0 z-10">
           <div className="max-w-7xl mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
               {/* Left side - Back button and seller info */}
               <div className="flex items-center space-x-4">
                 <button
                   onClick={() => navigate(-1)}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  className="p-2 hover:bg-stone-100 rounded-full transition-colors"
                 >
-                  <ArrowLeft className="h-5 w-5 text-gray-600" />
+                  <ArrowLeft className="h-5 w-5 text-stone-600" />
                 </button>
 
                 {!sellerDetails?.banner_url && (
                   <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-emerald-600 rounded-full flex items-center justify-center">
+                    <div className="w-12 h-12 bg-amber-500 rounded-full flex items-center justify-center">
                       {sellerDetails?.logo_url ? (
                         <img
                           src={getAssetUrl(sellerDetails.logo_url)}
@@ -318,12 +318,12 @@ const SellerStore: React.FC = () => {
                       </span>
                     </div>
                     <div>
-                      <h1 className="text-xl font-bold text-gray-900">
+                      <h1 className="text-xl font-bold text-stone-800">
                         {sellerDetails?.shop_name ||
                           sellerInfo?.shop_name ||
                           "Seller Store"}
                       </h1>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-stone-600">
                         {filteredProducts.length} products available
                       </p>
                     </div>
@@ -337,8 +337,8 @@ const SellerStore: React.FC = () => {
                   onClick={() => setViewMode("grid")}
                   className={`p-2 rounded-lg transition-colors ${
                     viewMode === "grid"
-                      ? "bg-emerald-100 text-emerald-600"
-                      : "text-gray-400 hover:text-gray-600"
+                      ? "bg-amber-100 text-amber-600"
+                      : "text-stone-400 hover:text-stone-600"
                   }`}
                 >
                   <Grid3X3 className="h-5 w-5" />
@@ -347,8 +347,8 @@ const SellerStore: React.FC = () => {
                   onClick={() => setViewMode("list")}
                   className={`p-2 rounded-lg transition-colors ${
                     viewMode === "list"
-                      ? "bg-emerald-100 text-emerald-600"
-                      : "text-gray-400 hover:text-gray-600"
+                      ? "bg-amber-100 text-amber-600"
+                      : "text-stone-400 hover:text-stone-600"
                   }`}
                 >
                   <List className="h-5 w-5" />
@@ -360,15 +360,15 @@ const SellerStore: React.FC = () => {
 
         <div className="max-w-7xl mx-auto px-4 py-6">
           {/* Filters Section */}
-          <div className="bg-white rounded-lg shadow-sm border border-emerald-100 mb-6">
-            <div className="p-4 border-b border-emerald-100">
+          <div className="bg-white rounded-lg shadow-sm border border-stone-200 mb-6">
+            <div className="p-4 border-b border-stone-200">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-emerald-900">
+                <h2 className="text-lg font-semibold text-stone-800">
                   Filters
                 </h2>
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className="flex items-center space-x-2 px-3 py-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                  className="flex items-center space-x-2 px-3 py-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
                 >
                   <Filter className="h-4 w-4" />
                   <span>Filters</span>
@@ -380,17 +380,17 @@ const SellerStore: React.FC = () => {
               <div className="p-4 space-y-4">
                 {/* Search */}
                 <div>
-                  <label className="block text-sm font-medium text-emerald-800 mb-2">
+                  <label className="block text-sm font-medium text-stone-800 mb-2">
                     Search Products
                   </label>
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-stone-400" />
                     <input
                       type="text"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       placeholder="Search products..."
-                      className="w-full pl-10 pr-4 py-2 border border-emerald-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                      className="w-full pl-10 pr-4 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                     />
                   </div>
                 </div>
@@ -398,13 +398,13 @@ const SellerStore: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Category Filter */}
                   <div>
-                    <label className="block text-sm font-medium text-emerald-800 mb-2">
+                    <label className="block text-sm font-medium text-stone-800 mb-2">
                       Category
                     </label>
                     <select
                       value={selectedCategory}
                       onChange={(e) => setSelectedCategory(e.target.value)}
-                      className="w-full px-3 py-2 border border-emerald-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                      className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                     >
                       <option value="">All Categories</option>
                       {categories.map((category) => (
@@ -417,7 +417,7 @@ const SellerStore: React.FC = () => {
 
                   {/* Price Range */}
                   <div>
-                    <label className="block text-sm font-medium text-emerald-800 mb-2">
+                    <label className="block text-sm font-medium text-stone-800 mb-2">
                       Min Price
                     </label>
                     <input
@@ -427,12 +427,12 @@ const SellerStore: React.FC = () => {
                         setPriceRange({ ...priceRange, min: e.target.value })
                       }
                       placeholder="₱0"
-                      className="w-full px-3 py-2 border border-emerald-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                      className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-emerald-800 mb-2">
+                    <label className="block text-sm font-medium text-stone-800 mb-2">
                       Max Price
                     </label>
                     <input
@@ -442,20 +442,20 @@ const SellerStore: React.FC = () => {
                         setPriceRange({ ...priceRange, max: e.target.value })
                       }
                       placeholder="₱1000"
-                      className="w-full px-3 py-2 border border-emerald-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                      className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                     />
                   </div>
                 </div>
 
                 {/* Sort */}
                 <div>
-                  <label className="block text-sm font-medium text-emerald-800 mb-2">
+                  <label className="block text-sm font-medium text-stone-800 mb-2">
                     Sort By
                   </label>
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="w-full px-3 py-2 border border-emerald-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                   >
                     <option value="name">Name (A-Z)</option>
                     <option value="price-low">Price (Low to High)</option>
@@ -469,7 +469,7 @@ const SellerStore: React.FC = () => {
                 <div className="flex justify-end">
                   <button
                     onClick={clearFilters}
-                    className="px-4 py-2 text-sm text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                    className="px-4 py-2 text-sm text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
                   >
                     Clear All Filters
                   </button>
@@ -481,13 +481,13 @@ const SellerStore: React.FC = () => {
           {/* Products Grid/List */}
           {filteredProducts.length === 0 ? (
             <div className="text-center py-12">
-              <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Package className="h-12 w-12 text-emerald-500" />
+              <div className="w-24 h-24 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Package className="h-12 w-12 text-stone-600" />
               </div>
-              <h3 className="text-xl font-medium text-emerald-900 mb-2">
+              <h3 className="text-xl font-medium text-stone-800 mb-2">
                 No products found
               </h3>
-              <p className="text-emerald-900/70 mb-6">
+              <p className="text-stone-600 mb-6">
                 {searchTerm ||
                 selectedCategory ||
                 priceRange.min ||
@@ -501,7 +501,7 @@ const SellerStore: React.FC = () => {
                 priceRange.max) && (
                 <button
                   onClick={clearFilters}
-                  className="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium"
+                  className="px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium"
                 >
                   Clear Filters
                 </button>
@@ -518,13 +518,13 @@ const SellerStore: React.FC = () => {
               {filteredProducts.map((product) => (
                 <div
                   key={product.id}
-                  className={`bg-white rounded-lg shadow-sm border border-emerald-100 overflow-hidden hover:shadow-md transition-shadow ${
+                  className={`bg-white rounded-lg shadow-sm border border-stone-200 overflow-hidden hover:shadow-md transition-shadow ${
                     viewMode === "list" ? "flex" : ""
                   }`}
                 >
                   {/* Product Image */}
                   <div
-                    className={`bg-emerald-100 ${
+                    className={`bg-stone-100 ${
                       viewMode === "grid"
                         ? "aspect-square"
                         : "w-32 h-32 flex-shrink-0"
@@ -549,34 +549,34 @@ const SellerStore: React.FC = () => {
                         product.main_image_url ? "hidden" : ""
                       }`}
                     >
-                      <span className="text-emerald-700 text-sm">No Image</span>
+                      <span className="text-stone-600 text-sm">No Image</span>
                     </div>
                   </div>
 
                   {/* Product Info */}
                   <div className={`p-4 ${viewMode === "list" ? "flex-1" : ""}`}>
-                    <h3 className="font-semibold text-emerald-900 mb-2 line-clamp-2">
+                    <h3 className="font-semibold text-stone-800 mb-2 line-clamp-2">
                       {product.name}
                     </h3>
 
                     {product.category && (
-                      <p className="text-xs text-emerald-600 mb-2">
+                      <p className="text-xs text-stone-600 mb-2">
                         {product.category}
                       </p>
                     )}
 
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-lg font-bold text-emerald-700">
+                      <span className="text-lg font-bold text-amber-600">
                         ₱{product.price.toLocaleString()}
                       </span>
-                      <div className="flex items-center space-x-1 text-xs text-gray-500">
+                      <div className="flex items-center space-x-1 text-xs text-stone-500">
                         <Star className="h-3 w-3 fill-current text-yellow-400" />
                         <span>{product.sold_count} sold</span>
                       </div>
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-500">
+                      <span className="text-sm text-stone-600">
                         Stock: {product.stock}
                       </span>
                       <button
@@ -584,7 +584,7 @@ const SellerStore: React.FC = () => {
                         disabled={
                           isAddingToCart === product.id || product.stock === 0
                         }
-                        className="flex items-center space-x-1 px-3 py-1 bg-emerald-600 text-white text-sm rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center space-x-1 px-3 py-1 bg-amber-600 text-white text-sm rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <ShoppingCart className="h-3 w-3" />
                         <span>
@@ -596,7 +596,7 @@ const SellerStore: React.FC = () => {
                     {/* View Product Button */}
                     <button
                       onClick={() => navigate(`/product/${product.id}`)}
-                      className="w-full mt-2 px-3 py-2 text-sm border border-emerald-300 text-emerald-700 rounded-lg hover:bg-emerald-50 transition-colors"
+                      className="w-full mt-2 px-3 py-2 text-sm border border-stone-300 text-stone-700 rounded-lg hover:bg-stone-50 transition-colors"
                     >
                       View Product
                     </button>

@@ -46,7 +46,7 @@ const Login: React.FC = () => {
   };
 
   const handleBackNavigation = () => {
-    navigate(-1); // Go back to previous page in browser history
+    navigate("/"); // Navigate to Dashboard
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -1,15 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
-import {
-  Package,
-  Truck,
-  CheckCircle,
-  Clock,
-  Eye,
-  Star,
-  X,
-  RotateCcw,
-} from "lucide-react";
+import { Package, Truck, CheckCircle, Clock, Eye, X } from "lucide-react";
 import { apiService, getAssetUrl } from "../services/api";
 import type { Order, OrderItem } from "../services/api";
 import Toast from "../components/Toast";
@@ -107,19 +98,12 @@ const MyPurchases: React.FC = () => {
           bgColor: "bg-red-100",
           text: "Cancelled",
         };
-      case "refunded":
+      case "rejected":
         return {
-          icon: RotateCcw,
-          color: "text-gray-600",
-          bgColor: "bg-gray-100",
-          text: "Refunded",
-        };
-      case "refund_requested":
-        return {
-          icon: RotateCcw,
-          color: "text-yellow-600",
-          bgColor: "bg-yellow-100",
-          text: "Refund Requested",
+          icon: X,
+          color: "text-red-600",
+          bgColor: "bg-red-100",
+          text: "Rejected",
         };
       default:
         return {
@@ -173,21 +157,6 @@ const MyPurchases: React.FC = () => {
     }
   };
 
-  const handleRequestRefund = async (orderId: number, reason: string) => {
-    try {
-      const response = await apiService.requestRefund(orderId, reason);
-      if (response.success) {
-        showToast("Refund request submitted successfully", "success");
-        fetchOrders(); // Refresh orders
-      } else {
-        showToast("Failed to submit refund request", "error");
-      }
-    } catch (error) {
-      console.error("Error requesting refund:", error);
-      showToast("Failed to submit refund request", "error");
-    }
-  };
-
   const canCancelOrder = (status: string) => {
     return ["pending", "confirmed", "processing"].includes(status);
   };
@@ -195,10 +164,6 @@ const MyPurchases: React.FC = () => {
   const canConfirmDelivery = (status: string, deliveryConfirmed: boolean) => {
     // In pickup flow, allow confirming pickup completion when marked picked_up
     return status === "picked_up" && !deliveryConfirmed;
-  };
-
-  const canRequestRefund = (status: string) => {
-    return status === "delivered";
   };
 
   return (
@@ -235,7 +200,7 @@ const MyPurchases: React.FC = () => {
               { key: "ready_for_pickup", label: "Ready for Pickup" },
               { key: "picked_up", label: "Picked Up" },
               { key: "cancelled", label: "Cancelled" },
-              { key: "refunded", label: "Refunded" },
+              { key: "rejected", label: "Rejected" },
             ].map((tab) => (
               <button
                 key={tab.key}
@@ -407,6 +372,23 @@ const MyPurchases: React.FC = () => {
                             </div>
                           </div>
 
+                          {/* Rejection Reason Display */}
+                          {order.status === "rejected" && order.admin_notes && (
+                            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                              <div className="flex items-start space-x-2">
+                                <X className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                                <div>
+                                  <h5 className="font-medium text-red-800 mb-1">
+                                    Order Rejected
+                                  </h5>
+                                  <p className="text-sm text-red-700">
+                                    {order.admin_notes}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
                           {/* Shipping Information removed for pickup-only flow */}
                         </div>
 
@@ -437,33 +419,7 @@ const MyPurchases: React.FC = () => {
                             </button>
                           )}
 
-                          {/* Request Refund */}
-                          {canRequestRefund(order.status) && (
-                            <button
-                              onClick={() => {
-                                const reason = prompt(
-                                  "Please provide a reason for the refund request:"
-                                );
-                                if (reason && reason.trim()) {
-                                  handleRequestRefund(order.id, reason.trim());
-                                }
-                              }}
-                              className="flex items-center space-x-2 px-4 py-2 border border-orange-300 text-orange-700 rounded-lg hover:bg-orange-50 transition-colors"
-                            >
-                              <RotateCcw className="h-4 w-4" />
-                              <span>Request Refund</span>
-                            </button>
-                          )}
-
                           {/* Tracking removed for pickup flow */}
-
-                          {/* Write Review (for picked up orders) */}
-                          {order.status === "picked_up" && (
-                            <button className="flex items-center space-x-2 px-4 py-2 border border-stone-300 rounded-lg hover:bg-stone-50 transition-colors">
-                              <Star className="h-4 w-4 text-stone-600" />
-                              <span>Write Review</span>
-                            </button>
-                          )}
 
                           {/* View Details */}
                           <button
@@ -605,6 +561,19 @@ const MyPurchases: React.FC = () => {
                 </div>
               </div>
             )}
+
+            {/* Rejection Reason */}
+            {selectedOrder.status === "rejected" &&
+              selectedOrder.admin_notes && (
+                <div>
+                  <h4 className="font-semibold text-red-700 mb-3">
+                    ⚠️ Rejection Reason
+                  </h4>
+                  <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                    <p className="text-red-700">{selectedOrder.admin_notes}</p>
+                  </div>
+                </div>
+              )}
           </div>
         )}
       </Modal>
